@@ -728,7 +728,21 @@ void MeshDisplayCustom::processImage(int index, const sensor_msgs::Image& msg)
   cv_bridge::CvImagePtr cv_ptr;
 
   // simply converting every image to RGBA
-  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGBA8);
+  try {
+    if (msg.encoding == "32FC1") {
+      cv_ptr = cv_bridge::toCvCopy(msg);
+      cv_ptr->image.convertTo(cv_ptr->image, CV_8UC1, 127, 0);
+      cv::cvtColor(cv_ptr->image, cv_ptr->image, cv::COLOR_GRAY2RGBA);
+      cv_ptr->encoding = sensor_msgs::image_encodings::RGBA8;
+    } else {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGBA8);
+    }
+  } catch (cv_bridge::Exception& e){
+    printf("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+  // cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGBA8);
 
   // update image alpha
   // for(int i = 0; i < cv_ptr->image.rows; i++)
